@@ -274,6 +274,81 @@ Y finalmente lo habilitamos:
 ```bash
 sudo a2ensite default-ssl.conf
 ```
+## NGINX
+### Instalación
+```bash
+sudo apt update
+sudo apt install nginx
+```  
+### Habilitar FireWall
+```bash
+sudo ufw app list
+```
+```
+Output
+Available applications:
+  Nginx Full
+  Nginx HTTP
+  Nginx HTTPS
+  OpenSSH
+```
+- Nginx Full: este perfil abre el puerto 80 (tráfico web normal, no cifrado) y el puerto 443 (tráfico TLS/SSL cifrado)
+- Nginx HTTP: este perfil abre solo el puerto 80 (tráfico web normal, no cifrado)
+- Nginx HTTPS: este perfil abre solo el puerto 443 (tráfico TLS/SSL cifrado)
+
+```bash
+sudo ufw allow 'Nginx HTTP'
+```
+Verificamos:
+```bash
+sudo systemctl status nginx
+```
+### Configurar Bloques (como los virtualHost de apache)
+Creamos capteta y archivo, asignamos privilegios y usuario:
+```bash
+sudo mkdir -p /var/www/your_domain/html
+sudo chown -R $USER:$USER /var/www/your_domain/html
+sudo chmod -R 755 /var/www/your_domain
+nano /var/www/your_domain/html/index.html
+```
+Creamos nuestro bloque:
+```bash
+sudo nano /etc/nginx/sites-available/your_domain
+```
+El contenido es el siguiente:
+```
+server {
+        listen 80;
+        listen [::]:80;
+
+        root /var/www/your_domain/html;
+        index index.html index.htm index.nginx-debian.html;
+
+        server_name your_domain www.your_domain;
+
+        location / {
+                try_files $uri $uri/ =404;
+        }
+}
+```
+Habilitamo creando un enlace simbolico, el equivalente a a2ensite de apache:
+```bash
+sudo ln -s /etc/nginx/sites-available/your_domain /etc/nginx/sites-enabled/
+```
+### Evaluar
+Con esto solucionamos problemas de memoria, hay que abrir el siguiente:
+```bash
+sudo nano /etc/nginx/nginx.conf
+```
+Y en la linea donde indica server_names_bucket_size 64; borramos el # de comentar.
+Verificacmos que los archivos estan bien:
+```bash
+sudo nginx -t
+```
+Y reiniciamos el servidor nginx
+```bash
+sudo systemctl restart nginx
+```
 
 ## Datos instalacion:
 
